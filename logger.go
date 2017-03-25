@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016 Bitmark Inc.
+// Copyright (c) 2014-2017 Bitmark Inc.
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
@@ -15,7 +15,7 @@ import (
 const tagSuffix = ": "
 
 // the tagname reserved to set the default level for unknown tags
-const DefaultTag = "*"
+const DefaultTag = "DEFAULT"
 
 // the initial level for unknown tags
 const DefaultLevel = "error"
