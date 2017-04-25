@@ -70,7 +70,7 @@ type L struct {
 // arguments and any configuration files have been processed to
 // establish logging defaults.
 //
-// the name "*" is reserved to set a level for any tags that do not
+// the name from "DefaultTag" is reserved to set a level for any tags that do not
 // have table entries.
 func LoadLevels(levels map[string]string) {
 	for tag, level := range levels {
