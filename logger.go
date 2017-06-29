@@ -12,6 +12,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 )
 
 // initial configuration for the logger
@@ -198,7 +199,7 @@ func Initialise(configuration Configuration) error {
 		logInitialised = true
 
 		// ensure that the global critical/panic functions always write to the log file
-		global = New("GLOBAL")
+		global = New("PANIC")
 		global.level = "critical"
 		global.levelNumber = criticalValue
 	}
@@ -267,6 +268,7 @@ func Criticalf(format string, arguments ...interface{}) {
 func Panic(message string) {
 	global.Critical(message)
 	Flush()
+	time.Sleep(100 * time.Millisecond) // to allow logging output
 	panic(message)
 }
 
@@ -274,5 +276,14 @@ func Panic(message string) {
 func Panicf(format string, arguments ...interface{}) {
 	global.Criticalf(format, arguments...)
 	Flush()
+	time.Sleep(100 * time.Millisecond) // to allow logging output
 	panic(fmt.Sprintf(format, arguments...))
+}
+
+// conditional panic
+func PanicIfError(message string, err error) {
+	if nil == err {
+		return
+	}
+	Panicf("%s failed with error: %v", message, err)
 }
