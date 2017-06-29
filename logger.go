@@ -5,10 +5,54 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
 	"github.com/cihub/seelog"
+	"os"
+	"path"
 	"strings"
 	"sync"
+)
+
+// initial configuration for the logger
+//
+// example of use (with structure tags for config file parsing)
+//   type AppConfiguration struct {
+//     …
+//     Logging logger.Configuration `libucl:"logging" hcl:"logging" json:"logging"`
+//     …
+//   }
+//
+//   err := logger.Initialise(conf.Logging)
+//   if nil != err {  // if failed then display message and exit
+//     exitwithstatus.Message("logger error: %s", err)
+//   }
+//   defer logger.Finalise()
+//
+// example of ucl/hcl configuration section
+//   logging {
+//     directory = "/var/lib/app/log"
+//     file = "app.log"
+//     size = 1048576
+//     count = 50
+//     levels {
+//       DEFAULT = "info"
+//       system = "error"
+//       main = "warn"
+//     }
+//   }
+type Configuration struct {
+	Directory string            `libucl:"directory" hcl:"directory" json:"directory"`
+	File      string            `libucl:"file" hcl:"file" json:"file"`
+	Size      int               `libucl:"size" hcl:"size" json:"size"`
+	Count     int               `libucl:"count" hcl:"count" json:"count"`
+	Levels    map[string]string `libucl:"levels" hcl:"levels" json:"levels"`
+}
+
+// some restrictions on sizes
+const (
+	minimumSize  = 20000
+	minimumCount = 10
 )
 
 // The log messages will be "<tag><tagSuffix><message>"
@@ -46,11 +90,13 @@ var validLevels = map[string]int{
 	"off":      offValue,
 }
 
-// The logging structure
-// nice short name so use like:
+// The logging channel structure
+// example of use
 //
 //   var log *logger.L
 //   log := logger.New("sometag")
+//
+//   log.Debugf("value: %d", value)
 type L struct {
 	sync.Mutex
 	tag          string
@@ -61,30 +107,73 @@ type L struct {
 	log          seelog.LoggerInterface
 }
 
-// Pre-load default levels before creating any new logging channels
-// invalid levels are simply skipped and repeated calls will
-// accumulate new tag values and overwrite old tag values.
-//
-// This will not update currently open channels, it is only for new
-// channels, it is intended to be called once after command-line
-// arguments and any configuration files have been processed to
-// establish logging defaults.
-//
-// the name from "DefaultTag" is reserved to set a level for any tags that do not
-// have table entries.
-func LoadLevels(levels map[string]string) {
-	for tag, level := range levels {
+// to indicate logging properly set up
+var logInitialised = false
+
+// for panic log
+var global *L
+
+// Set up the logging system
+func Initialise(configuration Configuration) error {
+	if logInitialised {
+		return errors.New("logger is already initialised")
+	}
+
+	if "" == configuration.Directory {
+		return errors.New("Directory cannot be empty")
+	}
+
+	if "" == configuration.File {
+		return errors.New("File cannot be empty")
+	}
+
+	d, f := path.Split(configuration.File)
+	if "" != d && f != configuration.File {
+		return fmt.Errorf("File: %q cannot be a path name", configuration.File)
+	}
+
+	if configuration.Size < minimumSize {
+		return fmt.Errorf("Size: %d cannot be less than: %d", configuration.Size, minimumSize)
+	}
+
+	if configuration.Count < minimumCount {
+		return fmt.Errorf("Count: %d cannot be less than: %d", configuration.Count, minimumCount)
+	}
+
+	info, err := os.Lstat(configuration.Directory)
+	if nil != err {
+		return err
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("Directory: %q does not exist", configuration.Directory)
+	}
+	//permission := info.Mode().Perm()
+
+	lockFile := path.Join(configuration.Directory, "log.test")
+	os.Remove(lockFile)
+	fd, err := os.Create(lockFile)
+	if nil != err {
+		return err
+	}
+	defer fd.Close()
+	defer os.Remove(lockFile)
+	n, err := fd.Write([]byte("0123456789"))
+	if nil != err {
+		return err
+	}
+	if 10 != n {
+		return errors.New("unable to write to logging files")
+	}
+
+	for tag, level := range configuration.Levels {
 		// make sure that levelMap only contains correct data
 		// by ignoring invalid levels
 		if _, ok := validLevels[level]; ok {
 			levelMap[tag] = level
 		}
 	}
-}
 
-// Setup seelog to used a rotated log file and output all logs
-// level control is now controlled by this module
-func Initialise(file string, size int, number int) error {
+	filepath := path.Join(configuration.Directory, configuration.File)
 	config := fmt.Sprintf(`
           <seelog type="adaptive"
                   mininterval="2000000"
@@ -97,7 +186,7 @@ func Initialise(file string, size int, number int) error {
               <formats>
                   <format id="all" format="%%Date %%Time [%%LEVEL] %%Msg%%n" />
               </formats>
-          </seelog>`, file, size, number)
+          </seelog>`, filepath, configuration.Size, configuration.Count)
 
 	logger, err := seelog.LoggerFromConfigAsString(config)
 	if err != nil {
@@ -106,14 +195,21 @@ func Initialise(file string, size int, number int) error {
 	err = seelog.ReplaceLogger(logger)
 	if nil == err {
 		seelog.Current.Warn("LOGGER: ===== Logging system started =====")
+		logInitialised = true
+
+		// ensure that the global critical/panic functions always write to the log file
+		global = New("GLOBAL")
+		global.level = "critical"
+		global.levelNumber = criticalValue
 	}
 	return err
 }
 
-// flush all channels
+// flush all channels and shutdown the logger
 func Finalise() {
 	seelog.Current.Warn("LOGGER: ===== Logging system stopped =====")
 	seelog.Flush()
+	logInitialised = false
 }
 
 // flush all channels
@@ -124,17 +220,21 @@ func Flush() {
 // Open a new logging channel with a specified tag
 func New(tag string) *L {
 
+	if !logInitialised {
+		panic("logger.New Initialise was not called")
+	}
+
 	// map % -> %% to be printf safe
 	s := strings.Split(tag, "%")
 	j := strings.Join(s, "%%")
 
-	// determine the initial level
+	// determine the level
 	level, ok := levelMap[tag]
 	if !ok {
 		level, ok = levelMap[DefaultTag]
 	}
 	if !ok {
-		level = "error"
+		level = DefaultLevel
 	}
 
 	// create a logger channel
@@ -148,41 +248,31 @@ func New(tag string) *L {
 	}
 }
 
-// Change the log level for a given channel returns the current level
-//
-// Use the value of DefaultTag to return to current default value.
-// Use the value "" to just return the current setting
-func (l *L) ChangeLevel(level string) string {
-	// preserve current
-	current := l.level
-
-	// to return to default level which may have been modified
-	// by subsequent LoadLevels calls.
-	if DefaultTag == level {
-		// get currrent default level for this tag
-		var ok bool
-		level, ok = levelMap[l.tag]
-		if !ok {
-			level, ok = levelMap[DefaultTag]
-		}
-		if !ok {
-			level = DefaultLevel
-		}
-	} else if "" == level {
-		return current
-	}
-
-	// set level and corresponding number
-	if n, ok := validLevels[level]; ok {
-		l.Lock()
-		defer l.Unlock()
-		l.level = level
-		l.levelNumber = n
-	}
-	return current
-}
-
 // flush messages
 func (l *L) Flush() {
 	Flush()
+}
+
+// global logging message
+func Critical(message string) {
+	global.Critical(message)
+}
+
+// global logging formatted message
+func Criticalf(format string, arguments ...interface{}) {
+	global.Criticalf(format, arguments...)
+}
+
+// global logging message + panic
+func Panic(message string) {
+	global.Critical(message)
+	Flush()
+	panic(message)
+}
+
+// global logging formatted message + panic
+func Panicf(format string, arguments ...interface{}) {
+	global.Criticalf(format, arguments...)
+	Flush()
+	panic(fmt.Sprintf(format, arguments...))
 }

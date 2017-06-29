@@ -5,7 +5,7 @@
 package logger
 
 const (
-	Major   = "2"
+	Major   = "3"
 	Minor   = "0"
 	Version = Major + "." + Minor
 )

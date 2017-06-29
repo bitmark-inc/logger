@@ -9,6 +9,7 @@ import (
 	"github.com/bitmark-inc/logger"
 	"io"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"testing"
@@ -20,24 +21,36 @@ var testLevelMap = map[string]string{
 }
 
 const (
+	logDirectory     = "log"
 	logFileName      = "test.log"
-	logNumberOfFiles = 3
+	logSizeOfFiles   = 30000
+	logNumberOfFiles = 10
 )
 
 func removeLogFiles() {
-	os.Remove(logFileName)
+	pathName := path.Join(logDirectory, logFileName)
+	os.Remove(pathName)
 	for i := 0; i <= logNumberOfFiles; i += 1 {
-		os.Remove(logFileName + "." + strconv.Itoa(i))
+		os.Remove(pathName + "." + strconv.Itoa(i))
 	}
+	os.Remove(logDirectory)
 }
 
 func setup(t *testing.T) {
 	removeLogFiles()
-	err := logger.Initialise(logFileName, 1024, 2)
-	if err != nil {
-		t.Errorf("Logger setup failed with error: %v", err)
+	os.Mkdir(logDirectory, 0770)
+	c := logger.Configuration{
+		Directory: logDirectory,
+		File:      logFileName,
+		Size:      logSizeOfFiles,
+		Count:     logNumberOfFiles,
+		Levels:    testLevelMap,
 	}
-	logger.LoadLevels(testLevelMap)
+
+	err := logger.Initialise(c)
+	if err != nil {
+		t.Fatalf("Logger setup failed with error: %v", err)
+	}
 }
 
 func teardown(t *testing.T) {
@@ -117,9 +130,10 @@ func TestClosure(t *testing.T) {
 // compare actual log results with expected, ignoring the dat and time values
 func checkfile(t *testing.T, s string) {
 	logger.Finalise()
-	f, err := os.Open(logFileName)
+	pathName := path.Join(logDirectory, logFileName)
+	f, err := os.Open(pathName)
 	if err != nil {
-		t.Errorf("Failed to open %s because: %v", logFileName, err)
+		t.Errorf("Failed to open %s because: %v", pathName, err)
 		return
 	}
 	defer f.Close()

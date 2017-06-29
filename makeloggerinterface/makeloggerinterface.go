@@ -29,7 +29,10 @@ const (
 // Log a simple string
 // e.g.
 //   log.{{.CapitalLevel}}("a log message")
-func (l *LoggerChannel) {{.CapitalLevel}}(message string) {
+func (l *L) {{.CapitalLevel}}(message string) {
+	if !logInitialised || nil == l {
+		panic("logger is not initialised")
+	}
 	if l.levelNumber <= {{.LowerLevel}}Value {
 		l.log.{{.CapitalLevel}}(l.formatPrefix + message)
 	}
@@ -38,7 +41,10 @@ func (l *LoggerChannel) {{.CapitalLevel}}(message string) {
 // Log a formatted string with arguments lige fmt.Sprintf()
 // e.g.
 //   log.{{.CapitalLevel}}f("the value = %d", xValue)
-func (l *LoggerChannel) {{.CapitalLevel}}f(format string, arguments ...interface{}) {
+func (l *L) {{.CapitalLevel}}f(format string, arguments ...interface{}) {
+	if !logInitialised || nil == l {
+		panic("logger is not initialised")
+	}
 	if l.levelNumber <= {{.LowerLevel}}Value {
 		l.log.{{.CapitalLevel}}f(l.formatPrefix+format, arguments...)
 	}
@@ -51,7 +57,10 @@ func (l *LoggerChannel) {{.CapitalLevel}}f(format string, arguments ...interface
 //   log.{{.CapitalLevel}}c(func() string {
 //       return fmt.Sprintf("the sin(%f) = %f", x, math.sin(x))
 //   })
-func (l *LoggerChannel) {{.CapitalLevel}}c(closure func() string) {
+func (l *L) {{.CapitalLevel}}c(closure func() string) {
+	if !logInitialised || nil == l {
+		panic("logger is not initialised")
+	}
 	if l.levelNumber <= {{.LowerLevel}}Value {
 		l.log.{{.CapitalLevel}}(l.formatPrefix + closure())
 	}
