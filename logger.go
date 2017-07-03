@@ -36,6 +36,7 @@ import (
 //     file = "app.log"
 //     size = 1048576
 //     count = 50
+//     #console = true # to duplicate messages to console (default false)
 //     levels {
 //       DEFAULT = "info"
 //       system = "error"
@@ -48,6 +49,7 @@ type Configuration struct {
 	Size      int               `libucl:"size" hcl:"size" json:"size"`
 	Count     int               `libucl:"count" hcl:"count" json:"count"`
 	Levels    map[string]string `libucl:"levels" hcl:"levels" json:"levels"`
+	Console   bool              `libucl:"console" hcl:"console" json:"console"`
 }
 
 // some restrictions on sizes
@@ -174,6 +176,11 @@ func Initialise(configuration Configuration) error {
 		}
 	}
 
+	optionalConsole := ""
+	if configuration.Console {
+		optionalConsole = "<console />"
+	}
+
 	filepath := path.Join(configuration.Directory, configuration.File)
 	config := fmt.Sprintf(`
           <seelog type="adaptive"
@@ -183,11 +190,12 @@ func Initialise(configuration Configuration) error {
                   minlevel="trace">
               <outputs formatid="all">
                   <rollingfile type="size" filename="%s" maxsize="%d" maxrolls="%d" />
+                  %s
               </outputs>
               <formats>
                   <format id="all" format="%%Date %%Time [%%LEVEL] %%Msg%%n" />
               </formats>
-          </seelog>`, filepath, configuration.Size, configuration.Count)
+          </seelog>`, filepath, configuration.Size, configuration.Count, optionalConsole)
 
 	logger, err := seelog.LoggerFromConfigAsString(config)
 	if err != nil {
