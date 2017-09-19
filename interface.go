@@ -3,9 +3,14 @@
 // license that can be found in the LICENSE file.
 
 // Generated file: Do _NOT_ Modify
-// Generated on: 2017-06-28T16:24:30+08:00
+// Generated on: 2017-09-19T11:23:21+08:00
 
 package logger
+
+import (
+	"fmt"
+)
+
 
 // Log a simple string
 // e.g.
@@ -27,7 +32,8 @@ func (l *L) Tracef(format string, arguments ...interface{}) {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= traceValue {
-		l.log.Tracef(l.formatPrefix+format, arguments...)
+		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
+		l.log.Trace(s)
 	}
 }
 
@@ -67,7 +73,8 @@ func (l *L) Debugf(format string, arguments ...interface{}) {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= debugValue {
-		l.log.Debugf(l.formatPrefix+format, arguments...)
+		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
+		l.log.Debug(s)
 	}
 }
 
@@ -107,7 +114,8 @@ func (l *L) Infof(format string, arguments ...interface{}) {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= infoValue {
-		l.log.Infof(l.formatPrefix+format, arguments...)
+		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
+		l.log.Info(s)
 	}
 }
 
@@ -147,7 +155,8 @@ func (l *L) Warnf(format string, arguments ...interface{}) {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= warnValue {
-		l.log.Warnf(l.formatPrefix+format, arguments...)
+		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
+		l.log.Warn(s)
 	}
 }
 
@@ -187,7 +196,8 @@ func (l *L) Errorf(format string, arguments ...interface{}) {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= errorValue {
-		l.log.Errorf(l.formatPrefix+format, arguments...)
+		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
+		l.log.Error(s)
 	}
 }
 
@@ -227,7 +237,8 @@ func (l *L) Criticalf(format string, arguments ...interface{}) {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= criticalValue {
-		l.log.Criticalf(l.formatPrefix+format, arguments...)
+		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
+		l.log.Critical(s)
 	}
 }
 

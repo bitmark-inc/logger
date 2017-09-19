@@ -21,6 +21,11 @@ const (
 // Generated on: {{.Today}}
 
 package logger
+
+import (
+	"fmt"
+)
+
 `
 )
 
@@ -46,7 +51,8 @@ func (l *L) {{.CapitalLevel}}f(format string, arguments ...interface{}) {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= {{.LowerLevel}}Value {
-		l.log.{{.CapitalLevel}}f(l.formatPrefix+format, arguments...)
+		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
+		l.log.{{.CapitalLevel}}(s)
 	}
 }
 
