@@ -7,12 +7,13 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"github.com/cihub/seelog"
 	"os"
 	"path"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cihub/seelog"
 )
 
 // initial configuration for the logger

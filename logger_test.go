@@ -6,13 +6,14 @@ package logger_test
 
 import (
 	"bufio"
-	"github.com/bitmark-inc/logger"
 	"io"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/bitmark-inc/logger"
 )
 
 var testLevelMap = map[string]string{
