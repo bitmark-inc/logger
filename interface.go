@@ -11,7 +11,6 @@ import (
 	"fmt"
 )
 
-
 // Log a simple string
 // e.g.
 //   log.Trace("a log message")
