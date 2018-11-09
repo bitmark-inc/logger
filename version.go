@@ -1,11 +1,12 @@
-// Copyright (c) 2014-2017 Bitmark Inc.
+// Copyright (c) 2014-2018 Bitmark Inc.
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
 package logger
 
 const (
-	Major   = "3"
-	Minor   = "4"
-	Version = Major + "." + Minor
+	Major   = "0"
+	Minor   = "3"
+	Patch   = "4"
+	Version = Major + "." + Minor + "." + Patch
 )
