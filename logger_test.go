@@ -56,13 +56,13 @@ func setup(t *testing.T) {
 	}
 }
 
-func teardown(t *testing.T) {
+func teardown() {
 	removeLogFiles()
 }
 
 func TestLevels(t *testing.T) {
 	setup(t)
-	defer teardown(t)
+	defer teardown()
 
 	mainLog := logger.New("main")
 	auxLog := logger.New("aux")
@@ -96,7 +96,7 @@ func TestLevels(t *testing.T) {
 
 func TestClosure(t *testing.T) {
 	setup(t)
-	defer teardown(t)
+	defer teardown()
 
 	mainLog := logger.New("main")
 
@@ -164,7 +164,7 @@ func checkfile(t *testing.T, s string) {
 func TestListLevels(t *testing.T) {
 	setup(t)
 	defer logger.Finalise()
-	defer teardown(t)
+	defer teardown()
 
 	l, err := logger.ListLevels()
 	assert.Nil(t, err, "wrong ListLevels")
@@ -186,7 +186,7 @@ func TestListLevels(t *testing.T) {
 
 func TestUpdateTagLogLevel(t *testing.T) {
 	setup(t)
-	defer teardown(t)
+	defer teardown()
 
 	mainLog := logger.New("main")
 	mainLog.Debug("This should log")
