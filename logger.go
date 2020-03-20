@@ -255,9 +255,6 @@ func New(tag string) *L {
 	s := strings.Split(tag, "%")
 	j := strings.Join(s, "%%")
 
-	globalData.Lock()
-	defer globalData.Unlock()
-
 	// determine the level
 	level, ok := levelMap[tag]
 	if !ok {
@@ -277,7 +274,9 @@ func New(tag string) *L {
 		log:          seelog.Current,
 	}
 
+	globalData.Lock()
 	globalData.data = append(globalData.data, l)
+	defer globalData.Unlock()
 
 	return l
 }
