@@ -6,6 +6,7 @@ package logger_test
 
 import (
 	"bufio"
+	"encoding/json"
 	"io"
 	"os"
 	"path"
@@ -14,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/bitmark-inc/logger"
+	"github.com/stretchr/testify/assert"
 )
 
 var testLevelMap = map[string]string{
@@ -157,4 +159,54 @@ func checkfile(t *testing.T, s string) {
 			t.Errorf("Mismatch read: '%s' wanted: '%s'", actualLine, line)
 		}
 	}
+}
+
+func TestListLevels(t *testing.T) {
+	setup(t)
+	defer logger.Finalise()
+	defer teardown(t)
+
+	l, err := logger.ListLevels()
+	assert.Nil(t, err, "wrong ListLevels")
+
+	var s logger.LogLevels
+	err = json.Unmarshal(l, &s)
+	assert.Nil(t, err, "wrong bytes unmarshal")
+
+	for _, l := range s.Levels {
+		if l.Tag == "main" {
+			assert.Equal(t, "debug", l.LogLevel, "wrong main level")
+		}
+
+		if l.Tag == "aux" {
+			assert.Equal(t, "warn", l.LogLevel, "wrong aux level")
+		}
+	}
+}
+
+func TestUpdateTagLogLevel(t *testing.T) {
+	setup(t)
+	defer teardown(t)
+
+	mainLog := logger.New("main")
+	mainLog.Debug("This should log")
+
+	err := logger.UpdateTagLogLevel("main", "info")
+	assert.Nil(t, err, "wrong UpdateTagLogLevel")
+
+	mainLog.Trace("This should not log")
+	mainLog.Debug("This should not log")
+	mainLog.Info("This should log")
+	mainLog.Warn("This should log")
+	mainLog.Error("This should log")
+	mainLog.Critical("This should log")
+
+	checkfile(t, `2014-08-12 10:44:35 [WARN] LOGGER: ===== Logging system started =====
+2014-08-12 10:44:35 [DEBUG] main: This should log
+2014-08-12 10:44:35 [INFO] main: This should log
+2014-08-12 10:44:35 [WARN] main: This should log
+2014-08-12 10:44:35 [ERROR] main: This should log
+2014-08-12 10:44:35 [CRITICAL] main: This should log
+2014-08-12 10:44:35 [WARN] LOGGER: ===== Logging system stopped =====
+`)
 }

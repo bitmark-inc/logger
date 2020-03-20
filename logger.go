@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -57,16 +58,16 @@ type Configuration struct {
 const (
 	minimumSize  = 20000
 	minimumCount = 10
+
+	// The log messages will be "<tag><tagSuffix><message>"
+	tagSuffix = ": "
+
+	// the tagname reserved to set the default level for unknown tags
+	DefaultTag = "DEFAULT"
+
+	// the initial level for unknown tags
+	DefaultLevel = "error"
 )
-
-// The log messages will be "<tag><tagSuffix><message>"
-const tagSuffix = ": "
-
-// the tagname reserved to set the default level for unknown tags
-const DefaultTag = "DEFAULT"
-
-// the initial level for unknown tags
-const DefaultLevel = "error"
 
 // Holds a set of default values for future NewChannel calls
 var levelMap = map[string]string{DefaultTag: DefaultLevel}
@@ -111,15 +112,30 @@ type L struct {
 	log          seelog.LoggerInterface
 }
 
-// to indicate logging properly set up
-var logInitialised = false
+// LogLevels - log levels
+type LogLevels struct {
+	Levels []Level `json:"levels"`
+}
 
-// for panic log
-var global *L
+// Level - log level info
+type Level struct {
+	Tag      string `json:"tag"`
+	LogLevel string `json:"category"`
+}
+
+// loggers - holds all logger info
+type loggers struct {
+	sync.Mutex
+	globalLog   *L
+	initialised bool
+	data        []*L
+}
+
+var globalData loggers
 
 // Set up the logging system
 func Initialise(configuration Configuration) error {
-	if logInitialised {
+	if globalData.initialised {
 		return errors.New("logger is already initialised")
 	}
 
@@ -205,12 +221,12 @@ func Initialise(configuration Configuration) error {
 	err = seelog.ReplaceLogger(logger)
 	if nil == err {
 		seelog.Current.Warn("LOGGER: ===== Logging system started =====")
-		logInitialised = true
+		globalData.initialised = true
 
 		// ensure that the global critical/panic functions always write to the log file
-		global = New("PANIC")
-		global.level = "critical"
-		global.levelNumber = criticalValue
+		globalData.globalLog = New("PANIC")
+		globalData.globalLog.level = "critical"
+		globalData.globalLog.levelNumber = criticalValue
 	}
 	return err
 }
@@ -219,7 +235,8 @@ func Initialise(configuration Configuration) error {
 func Finalise() {
 	seelog.Current.Warn("LOGGER: ===== Logging system stopped =====")
 	seelog.Flush()
-	logInitialised = false
+	globalData.initialised = false
+	globalData.data = globalData.data[:0]
 }
 
 // flush all channels
@@ -230,13 +247,16 @@ func Flush() {
 // Open a new logging channel with a specified tag
 func New(tag string) *L {
 
-	if !logInitialised {
+	if !globalData.initialised {
 		panic("logger.New Initialise was not called")
 	}
 
 	// map % -> %% to be printf safe
 	s := strings.Split(tag, "%")
 	j := strings.Join(s, "%%")
+
+	globalData.Lock()
+	defer globalData.Unlock()
 
 	// determine the level
 	level, ok := levelMap[tag]
@@ -248,7 +268,7 @@ func New(tag string) *L {
 	}
 
 	// create a logger channel
-	return &L{
+	l := &L{
 		tag:          tag, // for referencing default level
 		formatPrefix: j + tagSuffix,
 		textPrefix:   tag + tagSuffix,
@@ -256,6 +276,10 @@ func New(tag string) *L {
 		levelNumber:  validLevels[level], // level is validated so get a non-zero value
 		log:          seelog.Current,
 	}
+
+	globalData.data = append(globalData.data, l)
+
+	return l
 }
 
 // flush messages
@@ -265,17 +289,17 @@ func (l *L) Flush() {
 
 // global logging message
 func Critical(message string) {
-	global.Critical(message)
+	globalData.globalLog.Critical(message)
 }
 
 // global logging formatted message
 func Criticalf(format string, arguments ...interface{}) {
-	global.Criticalf(format, arguments...)
+	globalData.globalLog.Criticalf(format, arguments...)
 }
 
 // global logging message + panic
 func Panic(message string) {
-	global.Critical(message)
+	globalData.globalLog.Critical(message)
 	Flush()
 	time.Sleep(100 * time.Millisecond) // to allow logging output
 	panic(message)
@@ -283,7 +307,7 @@ func Panic(message string) {
 
 // global logging formatted message + panic
 func Panicf(format string, arguments ...interface{}) {
-	global.Criticalf(format, arguments...)
+	globalData.globalLog.Criticalf(format, arguments...)
 	Flush()
 	time.Sleep(100 * time.Millisecond) // to allow logging output
 	panic(fmt.Sprintf(format, arguments...))
@@ -295,4 +319,46 @@ func PanicIfError(message string, err error) {
 		return
 	}
 	Panicf("%s failed with error: %v", message, err)
+}
+
+// ListLevels - return log level info in json format
+// it's not lock protected, because it should be low frequency to list log
+// levels
+func ListLevels() ([]byte, error) {
+	levels := make([]Level, 0)
+
+	for _, l := range globalData.data {
+		levels = append(levels, Level{
+			Tag:      l.tag,
+			LogLevel: l.level,
+		})
+	}
+
+	ll := LogLevels{Levels: levels}
+	bs, err := json.Marshal(ll)
+	if nil != err {
+		return []byte{}, err
+	}
+
+	return bs, nil
+}
+
+// UpdateTagLogLevel - update log level for specific tag
+func UpdateTagLogLevel(tag, level string) error {
+	globalData.Lock()
+	defer globalData.Unlock()
+
+	for i, l := range globalData.data {
+		if l.tag == tag {
+			if num, ok := validLevels[level]; !ok {
+				return fmt.Errorf("level %s invalid", level)
+			} else {
+				globalData.data[i].levelNumber = num
+				globalData.data[i].level = level
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("tag %s not found", tag)
 }

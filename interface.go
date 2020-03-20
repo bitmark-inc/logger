@@ -15,7 +15,7 @@ import (
 // e.g.
 //   log.Trace("a log message")
 func (l *L) Trace(message string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= traceValue {
@@ -27,7 +27,7 @@ func (l *L) Trace(message string) {
 // e.g.
 //   log.Tracef("the value = %d", xValue)
 func (l *L) Tracef(format string, arguments ...interface{}) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= traceValue {
@@ -44,7 +44,7 @@ func (l *L) Tracef(format string, arguments ...interface{}) {
 //       return fmt.Sprintf("the sin(%f) = %f", x, math.sin(x))
 //   })
 func (l *L) Tracec(closure func() string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= traceValue {
@@ -56,7 +56,7 @@ func (l *L) Tracec(closure func() string) {
 // e.g.
 //   log.Debug("a log message")
 func (l *L) Debug(message string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= debugValue {
@@ -68,7 +68,7 @@ func (l *L) Debug(message string) {
 // e.g.
 //   log.Debugf("the value = %d", xValue)
 func (l *L) Debugf(format string, arguments ...interface{}) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= debugValue {
@@ -85,7 +85,7 @@ func (l *L) Debugf(format string, arguments ...interface{}) {
 //       return fmt.Sprintf("the sin(%f) = %f", x, math.sin(x))
 //   })
 func (l *L) Debugc(closure func() string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= debugValue {
@@ -97,7 +97,7 @@ func (l *L) Debugc(closure func() string) {
 // e.g.
 //   log.Info("a log message")
 func (l *L) Info(message string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= infoValue {
@@ -109,7 +109,7 @@ func (l *L) Info(message string) {
 // e.g.
 //   log.Infof("the value = %d", xValue)
 func (l *L) Infof(format string, arguments ...interface{}) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= infoValue {
@@ -126,7 +126,7 @@ func (l *L) Infof(format string, arguments ...interface{}) {
 //       return fmt.Sprintf("the sin(%f) = %f", x, math.sin(x))
 //   })
 func (l *L) Infoc(closure func() string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= infoValue {
@@ -138,7 +138,7 @@ func (l *L) Infoc(closure func() string) {
 // e.g.
 //   log.Warn("a log message")
 func (l *L) Warn(message string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= warnValue {
@@ -150,7 +150,7 @@ func (l *L) Warn(message string) {
 // e.g.
 //   log.Warnf("the value = %d", xValue)
 func (l *L) Warnf(format string, arguments ...interface{}) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= warnValue {
@@ -167,7 +167,7 @@ func (l *L) Warnf(format string, arguments ...interface{}) {
 //       return fmt.Sprintf("the sin(%f) = %f", x, math.sin(x))
 //   })
 func (l *L) Warnc(closure func() string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= warnValue {
@@ -179,7 +179,7 @@ func (l *L) Warnc(closure func() string) {
 // e.g.
 //   log.Error("a log message")
 func (l *L) Error(message string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= errorValue {
@@ -191,7 +191,7 @@ func (l *L) Error(message string) {
 // e.g.
 //   log.Errorf("the value = %d", xValue)
 func (l *L) Errorf(format string, arguments ...interface{}) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= errorValue {
@@ -208,7 +208,7 @@ func (l *L) Errorf(format string, arguments ...interface{}) {
 //       return fmt.Sprintf("the sin(%f) = %f", x, math.sin(x))
 //   })
 func (l *L) Errorc(closure func() string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= errorValue {
@@ -220,7 +220,7 @@ func (l *L) Errorc(closure func() string) {
 // e.g.
 //   log.Critical("a log message")
 func (l *L) Critical(message string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= criticalValue {
@@ -232,7 +232,7 @@ func (l *L) Critical(message string) {
 // e.g.
 //   log.Criticalf("the value = %d", xValue)
 func (l *L) Criticalf(format string, arguments ...interface{}) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= criticalValue {
@@ -249,7 +249,7 @@ func (l *L) Criticalf(format string, arguments ...interface{}) {
 //       return fmt.Sprintf("the sin(%f) = %f", x, math.sin(x))
 //   })
 func (l *L) Criticalc(closure func() string) {
-	if !logInitialised || nil == l {
+	if !globalData.initialised || nil == l {
 		panic("logger is not initialised")
 	}
 	if l.levelNumber <= criticalValue {
