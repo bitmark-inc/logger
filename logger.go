@@ -250,7 +250,7 @@ func Initialise(configuration Configuration) error {
 	return err
 }
 
-// flush all channels and shutdown the logger
+// flush all channels and let log message goes to standard out
 func Finalise() {
 	_ = seelog.Current.Warn("LOGGER: ===== Logging system stopped =====")
 	seelog.Flush()
