@@ -9,6 +9,7 @@ package logger
 
 import (
 	"fmt"
+	"github.com/bitmark-inc/logger/level"
 )
 
 // Log a simple string
@@ -18,7 +19,7 @@ func (l *L) Trace(message string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= traceValue {
+	if l.levelNumber <= level.TraceLevel {
 		l.log.Trace(l.formatPrefix + message)
 	}
 }
@@ -30,7 +31,7 @@ func (l *L) Tracef(format string, arguments ...interface{}) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= traceValue {
+	if l.levelNumber <= level.TraceLevel {
 		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
 		l.log.Trace(s)
 	}
@@ -47,7 +48,7 @@ func (l *L) Tracec(closure func() string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= traceValue {
+	if l.levelNumber <= level.TraceLevel {
 		l.log.Trace(l.formatPrefix + closure())
 	}
 }
@@ -59,7 +60,7 @@ func (l *L) Debug(message string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= debugValue {
+	if l.levelNumber <= level.DebugLevel {
 		l.log.Debug(l.formatPrefix + message)
 	}
 }
@@ -71,7 +72,7 @@ func (l *L) Debugf(format string, arguments ...interface{}) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= debugValue {
+	if l.levelNumber <= level.DebugLevel {
 		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
 		l.log.Debug(s)
 	}
@@ -88,7 +89,7 @@ func (l *L) Debugc(closure func() string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= debugValue {
+	if l.levelNumber <= level.DebugLevel {
 		l.log.Debug(l.formatPrefix + closure())
 	}
 }
@@ -100,7 +101,7 @@ func (l *L) Info(message string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= infoValue {
+	if l.levelNumber <= level.InfoLevel {
 		l.log.Info(l.formatPrefix + message)
 	}
 }
@@ -112,7 +113,7 @@ func (l *L) Infof(format string, arguments ...interface{}) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= infoValue {
+	if l.levelNumber <= level.InfoLevel {
 		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
 		l.log.Info(s)
 	}
@@ -129,7 +130,7 @@ func (l *L) Infoc(closure func() string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= infoValue {
+	if l.levelNumber <= level.InfoLevel {
 		l.log.Info(l.formatPrefix + closure())
 	}
 }
@@ -141,7 +142,7 @@ func (l *L) Warn(message string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= warnValue {
+	if l.levelNumber <= level.WarnLevel {
 		l.log.Warn(l.formatPrefix + message)
 	}
 }
@@ -153,7 +154,7 @@ func (l *L) Warnf(format string, arguments ...interface{}) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= warnValue {
+	if l.levelNumber <= level.WarnLevel {
 		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
 		l.log.Warn(s)
 	}
@@ -170,7 +171,7 @@ func (l *L) Warnc(closure func() string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= warnValue {
+	if l.levelNumber <= level.WarnLevel {
 		l.log.Warn(l.formatPrefix + closure())
 	}
 }
@@ -182,7 +183,7 @@ func (l *L) Error(message string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= errorValue {
+	if l.levelNumber <= level.ErrorLevel {
 		l.log.Error(l.formatPrefix + message)
 	}
 }
@@ -194,7 +195,7 @@ func (l *L) Errorf(format string, arguments ...interface{}) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= errorValue {
+	if l.levelNumber <= level.ErrorLevel {
 		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
 		l.log.Error(s)
 	}
@@ -211,7 +212,7 @@ func (l *L) Errorc(closure func() string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= errorValue {
+	if l.levelNumber <= level.ErrorLevel {
 		l.log.Error(l.formatPrefix + closure())
 	}
 }
@@ -223,7 +224,7 @@ func (l *L) Critical(message string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= criticalValue {
+	if l.levelNumber <= level.CriticalLevel {
 		l.log.Critical(l.formatPrefix + message)
 	}
 }
@@ -235,7 +236,7 @@ func (l *L) Criticalf(format string, arguments ...interface{}) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= criticalValue {
+	if l.levelNumber <= level.CriticalLevel {
 		s := fmt.Sprintf(l.formatPrefix+format, arguments...)
 		l.log.Critical(s)
 	}
@@ -252,7 +253,7 @@ func (l *L) Criticalc(closure func() string) {
 	if !validLogger(l) {
 		panic("logger is not initialised")
 	}
-	if l.levelNumber <= criticalValue {
+	if l.levelNumber <= level.CriticalLevel {
 		l.log.Critical(l.formatPrefix + closure())
 	}
 }
