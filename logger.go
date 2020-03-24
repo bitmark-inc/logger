@@ -72,7 +72,7 @@ const (
 // Holds a set of default values for future NewChannel calls
 var levelMap = map[string]string{DefaultTag: DefaultLevel}
 
-// simple ordering to allow <= to decide if log will be output
+// simple ordering to allow <= to decide if log will be outputTarget
 const (
 	_ = iota
 	traceValue
@@ -123,21 +123,62 @@ type Level struct {
 	LogLevel string `json:"category"`
 }
 
+type outputTarget int
+
+const (
+	stdOut outputTarget = iota + 1
+	fileOut
+)
+
 // loggers - holds all logger info
 type loggers struct {
 	sync.Mutex
 	globalLog   *L
 	initialised bool
 	data        []*L
+	output      outputTarget
 }
 
 var globalData loggers
+
+// default set output to standard out
+func init() {
+	globalData.output = stdOut
+	stdLogger := defaultLogger()
+
+	_ = seelog.ReplaceLogger(stdLogger)
+	// ensure that the global critical/panic functions always written
+	globalData.globalLog = New("PANIC")
+	globalData.globalLog.level = "critical"
+	globalData.globalLog.levelNumber = criticalValue
+}
+
+func defaultLogger() seelog.LoggerInterface {
+	config := fmt.Sprintf(`
+          <seelog type="adaptive"
+                  mininterval="2000000"
+                  maxinterval="100000000"
+                  critmsgcount="500"
+                  minlevel="trace">
+              <outputs formatid="all">
+			      <console />
+              </outputs>
+              <formats>
+                  <format id="all" format="%%Date %%Time [%%LEVEL] %%Msg%%n" />
+              </formats>
+          </seelog>`)
+
+	logger, _ := seelog.LoggerFromConfigAsString(config)
+	return logger
+}
 
 // Set up the logging system
 func Initialise(configuration Configuration) error {
 	if globalData.initialised {
 		return errors.New("logger is already initialised")
 	}
+
+	globalData.output = fileOut
 
 	if "" == configuration.Directory {
 		return errors.New("Directory cannot be empty")
@@ -233,9 +274,20 @@ func Initialise(configuration Configuration) error {
 
 // flush all channels and shutdown the logger
 func Finalise() {
-	seelog.Current.Warn("LOGGER: ===== Logging system stopped =====")
+	_ = seelog.Current.Warn("LOGGER: ===== Logging system stopped =====")
 	seelog.Flush()
-	globalData.initialised = false
+
+	// if log message goes to file, make it back to standard output
+	if globalData.output == fileOut {
+		globalData.initialised = false
+		globalData.output = stdOut
+		_ = seelog.ReplaceLogger(defaultLogger())
+
+		globalData.globalLog = New("PANIC")
+		globalData.globalLog.level = "critical"
+		globalData.globalLog.levelNumber = criticalValue
+	}
+
 	globalData.data = globalData.data[:0]
 }
 
@@ -246,8 +298,8 @@ func Flush() {
 
 // Open a new logging channel with a specified tag
 func New(tag string) *L {
-
-	if !globalData.initialised {
+	// if log message goes to file, then Initialise should be called
+	if globalData.output == fileOut && !globalData.initialised {
 		panic("logger.New Initialise was not called")
 	}
 
@@ -300,7 +352,7 @@ func Criticalf(format string, arguments ...interface{}) {
 func Panic(message string) {
 	globalData.globalLog.Critical(message)
 	Flush()
-	time.Sleep(100 * time.Millisecond) // to allow logging output
+	time.Sleep(100 * time.Millisecond) // to allow logging outputTarget
 	panic(message)
 }
 
@@ -308,7 +360,7 @@ func Panic(message string) {
 func Panicf(format string, arguments ...interface{}) {
 	globalData.globalLog.Criticalf(format, arguments...)
 	Flush()
-	time.Sleep(100 * time.Millisecond) // to allow logging output
+	time.Sleep(100 * time.Millisecond) // to allow logging outputTarget
 	panic(fmt.Sprintf(format, arguments...))
 }
 
@@ -360,4 +412,16 @@ func UpdateTagLogLevel(tag, level string) error {
 	}
 
 	return fmt.Errorf("tag %s not found", tag)
+}
+
+func validLogger(l *L) bool {
+	if globalData.output == stdOut {
+		return true
+	}
+
+	if !globalData.initialised || nil == l {
+		return false
+	}
+
+	return true
 }
