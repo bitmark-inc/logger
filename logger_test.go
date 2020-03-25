@@ -1,4 +1,5 @@
-// Copyright (c) 2014-2018 Bitmark Inc.
+// SPDX-License-Identifier: ISC
+// Copyright (c) 2014-2020 Bitmark Inc.
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
@@ -14,8 +15,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bitmark-inc/logger"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bitmark-inc/logger"
 )
 
 var testLevelMap = map[string]string{
@@ -145,10 +147,11 @@ func checkfile(t *testing.T, s string) {
 	// length of the data and time prefix to skip
 	dateTimeLength := 19
 
+loop:
 	for _, line := range strings.Split(s, "\n") {
 		actualLine, err := r.ReadString('\n')
 		if err == io.EOF && line == "" {
-			break
+			break loop
 		}
 		if err != nil {
 			t.Errorf("Error reading %s : %v", logFileName, err)

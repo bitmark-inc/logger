@@ -1,4 +1,5 @@
-// Copyright (c) 2014-2018 Bitmark Inc.
+// SPDX-License-Identifier: ISC
+// Copyright (c) 2014-2020 Bitmark Inc.
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
@@ -8,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bitmark-inc/logger/level"
 	"os"
 	"path"
 	"strings"
@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/cihub/seelog"
+
+	"github.com/bitmark-inc/logger/level"
 )
 
 // initial configuration for the logger

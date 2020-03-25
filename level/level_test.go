@@ -6,9 +6,11 @@
 package level_test
 
 import (
-	"github.com/bitmark-inc/logger/level"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/bitmark-inc/logger/level"
 )
 
 func TestValidLevels(t *testing.T) {
